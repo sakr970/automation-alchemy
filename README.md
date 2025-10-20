@@ -1,4 +1,11 @@
+# Automation Alchemy
 
+## 
+
+- Terraform (Infrastructure as Code)
+- Ansible (Configuration Management)
+- GitHub Actions (CI/CD)
+- Docker (Containerization)
 
 ### install require tools
 
@@ -18,4 +25,53 @@ sudo apt install ansible -y
 sudo apt install git curl jq tree -y
 ```
 
-gregrt
+```bash
+.
+├── README.md
+├── ansible
+│   ├── group_vars
+│   ├── inventories
+│   └── roles
+│       ├── app
+│       │   ├── defaults
+│       │   ├── files
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   ├── templates
+│       │   └── vars
+│       ├── base
+│       │   ├── defaults
+│       │   ├── files
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   ├── templates
+│       │   └── vars
+│       ├── docker
+│       │   ├── defaults
+│       │   ├── files
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   ├── templates
+│       │   └── vars
+│       ├── hardening
+│       │   ├── defaults
+│       │   ├── files
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   ├── templates
+│       │   └── vars
+│       └── netdata
+│           ├── defaults
+│           ├── files
+│           ├── handlers
+│           ├── tasks
+│           ├── templates
+│           └── vars
+├── docker
+│   ├── backend
+│   └── frontend
+└── terraform
+    ├── env
+    └── modules
+
+```
