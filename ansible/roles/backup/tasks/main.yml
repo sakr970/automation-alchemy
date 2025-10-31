@@ -1,0 +1,31 @@
+---
+- name: Install rsync
+  apt:
+    name: rsync
+    state: present
+    update_cache: yes
+
+- name: Deploy backup script
+  copy:
+    src: backup/scripts/backup.sh
+    dest: /usr/local/bin/backup.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure backup directory exists
+  file:
+    path: /var/backups/automation
+    state: directory
+    owner: devops
+    group: devops
+    mode: '0755'
+
+- name: Schedule backup cron job
+  cron:
+    name: "Automated backup job"
+    minute: "0"
+    hour: "3"
+    weekday: "0"
+    user: root
+    job: "/usr/local/bin/backup.sh >> /var/log/backup.log 2>&1"

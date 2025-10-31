@@ -1,0 +1,21 @@
+---
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Deploy nginx upstream config
+  template:
+    src: nginx/loadbalancer.conf
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Ensure nginx is enabled and running
+  systemd:
+    name: nginx
+    enabled: yes
+    state: started

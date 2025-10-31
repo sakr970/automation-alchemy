@@ -1,0 +1,54 @@
+- name: Ensure apt cache is up to date
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install common packages
+  apt:
+    name:
+      - sudo
+      - vim
+      - curl
+      - git
+      - python3
+      - python3-apt
+    state: present
+
+- name: Ensue devops user exists
+  user:
+    name: devops
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+    state: present
+
+- name: Ensure devops .ssh directory exists
+  file:
+    path: /home/devops/.ssh
+    state: directory
+    owner: devops
+    group: devops
+    mode: '0700'
+
+- name: check for devops public key
+  stat:
+    path: "{{ playbook_dir }}/roles/base/files/devops_id_rsa.pub"
+  register: devops_pubkey
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy authorized key for devops user (if provided)
+  copy:
+    src: files/devops_id_rsa.pub
+    dest: /home/devops/.ssh/authorized_keys
+    owner: devops
+    group: devops
+    mode: '0600'
+  when: devops_pubkey.stat.exists | default(false)
+
+- name: Allow passwordless sudo for devops user
+  copy:
+    dest: /etc/sudoers.d/devops
+    content: "devops ALL=(ALL) NOPASSWD:ALL\n"
+    mode: '0440'  

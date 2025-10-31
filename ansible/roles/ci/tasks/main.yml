@@ -1,0 +1,148 @@
+- name: Install apt dependencies
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - git
+      - rsync
+      - openssh-client
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Check if 'containerd' or 'containerd.io' packages are installed
+  become: yes
+  shell: |
+    dpkg -s containerd >/dev/null 2>&1 && echo containerd || true
+    dpkg -s containerd.io >/dev/null 2>&1 && echo containerd.io || true
+  register: containerd_check
+  changed_when: false
+  failed_when: false
+
+- name: Remove conflicting packages 'containerd'/'containerd.io' if present
+  become: yes
+  apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+    autoremove: yes
+  loop: "{{ containerd_check.stdout_lines }}"
+  when: containerd_check.stdout != ""
+
+- name: Install Docker
+  apt:
+    name:
+      - docker.io
+      - docker-compose
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Ensure docker.socket is enabled and started
+  service:
+    name: docker.socket
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Wait for docker socket to appear
+  wait_for:
+    path: /run/docker.sock
+    state: present
+    timeout: 30
+  become: yes
+
+- name: Ensure docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Install docker-compose
+  shell: |
+    if ! command -v docker-compose >/dev/null 2>&1; then
+      apt-get install -y docker-compose-plugin || true
+    fi
+  args:
+    warn: false
+  become: yes
+
+- name: Deploy application scripts
+  copy:
+    src: ci_pull_and_restart.sh
+    dest: /usr/local/bin/
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- name: Deploy CI deploy environment file
+  copy:
+    src: files/ci_deploy.env
+    dest: /etc/ci_deploy.env
+    owner: root
+    group: root
+    mode: '0640'
+  become: yes
+
+
+# ---
+# - name: Check for held apt packages
+#   become: yes
+#   command: apt-mark showhold
+#   register: held_packages
+#   changed_when: false
+#   failed_when: false
+
+# - name: Fail early if there are held packages blocking installs
+#   fail:
+#     msg: "There are held apt packages: {{ held_packages.stdout }}. Unhold them or investigate before continuing."
+#   when: held_packages.stdout != ""
+
+# - name: Check if 'containerd' or 'containerd.io' packages are installed
+#   become: yes
+#   shell: |
+#     dpkg -s containerd >/dev/null 2>&1 && echo containerd || true
+#     dpkg -s containerd.io >/dev/null 2>&1 && echo containerd.io || true
+#   register: containerd_check
+#   changed_when: false
+#   failed_when: false
+
+# - name: Remove conflicting packages 'containerd'/'containerd.io' if present
+#   become: yes
+#   apt:
+#     name: "{{ item }}"
+#     state: absent
+#     purge: yes
+#     autoremove: yes
+#   loop: "{{ containerd_check.stdout_lines }}"
+#   when: containerd_check.stdout != ""
+
+# - name: Install git and docker prequisites
+#   apt:
+#     name:
+#       - git
+#       - docker.io
+#       - docker-compose
+#     state: present
+#     update_cache: yes
+
+
+# - name: Ensure docker started
+#   service:
+#     name: docker
+#     state: started
+#     enabled: yes
+
+# - name: Print CI next steps
+#   debug:
+#     msg: |
+#       CI setup is complete. Please proceed with the following steps:
+#       1. Clone the application repository.
+#       2. Configure your CI/CD pipelines as needed.
+#       3. Ensure all necessary environment variables are set for your builds.
+#       4. Test the CI setup with a sample build.
