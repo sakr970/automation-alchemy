@@ -1,7 +1,0 @@
-.vagrant/
-*.log
-*.retry
-.terraform/
-__pycache__/
-node_modules/
-.env

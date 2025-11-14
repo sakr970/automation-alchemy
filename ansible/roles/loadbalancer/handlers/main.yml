@@ -1,6 +1,0 @@
-- name: Reload nginx
-  become: yes
-  systemd:
-    name: nginx
-    state: reloaded
-    daemon_reload: no
